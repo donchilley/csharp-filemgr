@@ -1,0 +1,57 @@
+body {
+    background-color: grey;
+}
+
+.content {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    position: relative;
+    justify-content: center;
+    align-items: center;
+}
+
+.widget {
+    position: relative;
+    height: 50%;
+    min-width: 50%;
+    width: fit-content;
+    display: flex;
+    flex-flow: column;
+    border: 1px solid black;
+    border-radius: 5px;
+}
+
+.folder-files-section {
+    padding: 1em;
+}
+
+.search-bar {
+    margin: 1em;
+}
+
+.current-folder-title {
+    margin-left: 1.5em;
+}
+
+.file-upload-container {
+    padding: 1em;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.folder {
+    position: relative;
+    width: 100%;
+}
+
+.search-results {
+    display: none;
+}
+
+.folder-files-section .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

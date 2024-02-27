@@ -1,0 +1,174 @@
+﻿<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="index.css">
+    <script type="text/javascript">
+
+        //TODO: on refresh check url to see if we can recover to the correct folder.
+        $(document).ready(function () {
+
+            //start of day get contents of root folder
+            const rootFolder = "obj"
+            let params = { folder: rootFolder }
+            if (location.hash) {
+                params = { folder: location.hash.slice(1) }
+                console.log(params)
+            } else {
+                console.log('no hash')
+            }
+
+            $.ajax({
+                type: "GET",
+                url: "/Folder",
+                data: param = params,
+                contentType: "application/json; charset=utf-8",
+                dataType: "json",
+                success: process,
+                error: function () { alert("error processing files in folder at start of day.") }
+            });
+
+            $("#current-folder").empty()
+            $("#current-folder").append(params.folder)
+
+            const navigate = function (event) {
+                let targetFolder = event.target.id
+                $("#current-folder").empty()
+                $("#current-folder").append(targetFolder)
+                $("#folder").empty()
+                $.ajax({
+                    type: "GET",
+                    url: "/Folder",
+                    data: param = { folder: targetFolder },
+                    contentType: "application/json; charset=utf-8",
+                    dataType: "json",
+                    success: process,
+                    error: function () { alert("error processing files in folder") }
+                });
+
+                //storing state in the URL.
+                let url = window.location.href.split("#")[0]
+                url += `#${targetFolder}`
+                window.location.href = url
+            }
+
+            function process(data, status) {
+
+                //display row to go back a folder if current folder is not root folder.
+                let prevFolder = document.getElementById("current-folder").innerHTML
+                if (prevFolder !== rootFolder) {
+                    prevFolder = prevFolder.slice(0, prevFolder.lastIndexOf("/"));
+                    let prevFolderRow = $(`<tr id="${prevFolder}"><td id="${prevFolder}">..</td><td class="button-col"><button id="${prevFolder}">Go Back</button></td></tr>`)
+                    prevFolderRow.on("click", navigate)
+                    $("#folder").append(prevFolderRow)
+                }
+
+                //populate table with folders
+                data.folders.forEach(folder => {
+                    let id = folder.name
+                    let path = folder.path.slice(2)
+                    let folderRow = $(`<tr id=${path}><td id=${path}>${id}</td><td class="button-col"><button id=${path}>View Folder</button></td><td>${folder.size}</td></tr>`)
+                    folderRow.on("click", navigate)
+                    $("#folder").append(folderRow)
+                })
+
+                //populate table with files
+                data.files.forEach(file => {
+                    let id = file.name
+                    let fileRow = $(`<tr><td>${id}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td><td>${file.size.toFixed(2)}kb</td>/tr>`)
+                    $("#folder").append(fileRow)
+                })
+            }
+
+            document.getElementById("search-bar").addEventListener("keydown", async function (event) {
+                if (event.key === "Enter") {
+                    const searchFolder = document.getElementById("current-folder").innerHTML
+                    $.ajax({
+                        type: "GET",
+                        url: "/Search",
+                        data: param = { folder: searchFolder, search: event.target.value },
+                        contentType: "application/json; charset=utf-8",
+                        dataType: "json",
+                        success: showSearchResults,
+                        error: function () { alert("error searching for files in current folder") }
+                    });
+                }
+            })
+
+            function showSearchResults(data, status) {
+                $("#search-results-table").empty()
+                $("#search-results-container").show()
+
+                //populate search-results table with folders
+                data.folders.forEach(folder => {
+                    let id = folder.name
+                    let path = folder.path.slice(2)
+                    let folderRow = $(`<tr id=${path}><td id=${path}>${id}</td><td class="button-col"><button id=${path}>View Folder</button></td></tr>`)
+                    folderRow.on("click", navigate)
+                    $("#search-results-table").append(folderRow)
+                })
+
+                //populate search-results table with files
+                data.files.forEach(file => {
+                    let id = file.name
+                    let fileRow = $(`<tr><td>${id}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td></tr>`)
+                    $("#search-results-table").append(fileRow)
+                })
+            }
+
+            document.getElementById("hide-search-results-button").addEventListener("click", function (event) {
+                $("#search-results-container").hide();
+            })
+
+            document.getElementById("file-upload-button").addEventListener("click", async function (event) {
+                const fileInput = document.getElementById("file-upload-input")
+                const file = fileInput.files[0]
+                //dont do anything if there is no file.
+                if (file) {
+                    let formData = new FormData();
+                    formData.append("file", file);
+                    await fetch("/File", {
+                        method: "POST",
+                        body: formData,
+                        data: param = { location: document.getElementById("current-folder").innerHTML },
+                    }).then(response => {
+                        if (response.ok) {
+                            alert("Successfully uploaded document to uploads folder.")
+                        } else {
+                            alert("uploading file was unsuccessful")
+                        }
+
+                    });;
+                }
+
+            })
+
+        });
+    </script>
+</head>
+
+<body>
+    <div class="content">
+        <div class="widget">
+            <input class="search-bar" type="search" id="search-bar" placeholder="Search for folders or files" />
+            <div class="current-folder-title">Current folder: <span id="current-folder"></span></div>
+            <div class="folder-files-section">
+                <table class="folder" id="folder"></table>
+            </div>
+            <div class="file-upload-container">
+                <input type="file" id="file-upload-input" accept="text/plain, application/json" />
+                <button id="file-upload-button">Upload</button>
+            </div>
+            <div class="folder-files-section search-results" id="search-results-container">
+                <div class="header"><span>Search Results</span> <button id="hide-search-results-button">Hide</button>
+                </div>
+                <table class="folder" id="search-results-table"></table>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
