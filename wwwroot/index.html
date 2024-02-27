@@ -29,7 +29,33 @@
             $("#current-folder").empty()
             $("#current-folder").append(params.folder)
 
-            const navigate = function (event) {
+            function process(data, status) {
+
+                //display row to go back a folder if current folder is not root folder.
+                let prevFolder = document.getElementById("current-folder").innerHTML
+                if (prevFolder !== rootFolder) {
+                    prevFolder = prevFolder.slice(0, prevFolder.lastIndexOf("/"));
+                    let prevFolderRow = $(`<tr id="${prevFolder}"><td id="${prevFolder}">..</td><td class="button-col"><button id="${prevFolder}">Go Back</button></td></tr>`)
+                    prevFolderRow.on("click", navigate)
+                    $("#folder").append(prevFolderRow)
+                }
+
+                //populate table with folders
+                data.folders.forEach(folder => {
+                    let path = folder.path.slice(2)
+                    let folderRow = $(`<tr id=${path}><td id=${path}>${folder.name}</td><td class="button-col"><button id=${path}>View Folder</button></td><td>${folder.size}</td></tr>`)
+                    folderRow.on("click", navigate)
+                    $("#folder").append(folderRow)
+                })
+
+                //populate table with files
+                data.files.forEach(file => {
+                    let fileRow = $(`<tr><td>${file.name}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td><td>${file.size.toFixed(2)}kb</td>/tr>`)
+                    $("#folder").append(fileRow)
+                })
+            }
+
+            function navigate(event) {
                 let targetFolder = event.target.id
                 $("#current-folder").empty()
                 $("#current-folder").append(targetFolder)
@@ -50,31 +76,22 @@
                 window.location.href = url
             }
 
-            function process(data, status) {
+            function showSearchResults(data, status) {
+                $("#search-results-table").empty()
+                $("#search-results-container").show()
 
-                //display row to go back a folder if current folder is not root folder.
-                let prevFolder = document.getElementById("current-folder").innerHTML
-                if (prevFolder !== rootFolder) {
-                    prevFolder = prevFolder.slice(0, prevFolder.lastIndexOf("/"));
-                    let prevFolderRow = $(`<tr id="${prevFolder}"><td id="${prevFolder}">..</td><td class="button-col"><button id="${prevFolder}">Go Back</button></td></tr>`)
-                    prevFolderRow.on("click", navigate)
-                    $("#folder").append(prevFolderRow)
-                }
-
-                //populate table with folders
+                //populate search-results table with folders
                 data.folders.forEach(folder => {
-                    let id = folder.name
                     let path = folder.path.slice(2)
-                    let folderRow = $(`<tr id=${path}><td id=${path}>${id}</td><td class="button-col"><button id=${path}>View Folder</button></td><td>${folder.size}</td></tr>`)
+                    let folderRow = $(`<tr id=${path}><td id=${path}>${folder.name}</td><td class="button-col"><button id=${path}>View Folder</button></td></tr>`)
                     folderRow.on("click", navigate)
-                    $("#folder").append(folderRow)
+                    $("#search-results-table").append(folderRow)
                 })
 
-                //populate table with files
+                //populate search-results table with files
                 data.files.forEach(file => {
-                    let id = file.name
-                    let fileRow = $(`<tr><td>${id}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td><td>${file.size.toFixed(2)}kb</td>/tr>`)
-                    $("#folder").append(fileRow)
+                    let fileRow = $(`<tr><td>${file.name}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td></tr>`)
+                    $("#search-results-table").append(fileRow)
                 })
             }
 
@@ -92,27 +109,6 @@
                     });
                 }
             })
-
-            function showSearchResults(data, status) {
-                $("#search-results-table").empty()
-                $("#search-results-container").show()
-
-                //populate search-results table with folders
-                data.folders.forEach(folder => {
-                    let id = folder.name
-                    let path = folder.path.slice(2)
-                    let folderRow = $(`<tr id=${path}><td id=${path}>${id}</td><td class="button-col"><button id=${path}>View Folder</button></td></tr>`)
-                    folderRow.on("click", navigate)
-                    $("#search-results-table").append(folderRow)
-                })
-
-                //populate search-results table with files
-                data.files.forEach(file => {
-                    let id = file.name
-                    let fileRow = $(`<tr><td>${id}</td><td><a href="${location.protocol}//${location.host}/File?fileName=${file.path}">Download File</a></td></tr>`)
-                    $("#search-results-table").append(fileRow)
-                })
-            }
 
             document.getElementById("hide-search-results-button").addEventListener("click", function (event) {
                 $("#search-results-container").hide();
