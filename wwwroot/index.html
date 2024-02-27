@@ -8,17 +8,12 @@
     <link rel="stylesheet" href="index.css">
     <script type="text/javascript">
 
-        //TODO: on refresh check url to see if we can recover to the correct folder.
         $(document).ready(function () {
-
-            //start of day get contents of root folder
+            //start of day - get contents of root folder and check hash for state recovery.
             const rootFolder = "obj"
             let params = { folder: rootFolder }
             if (location.hash) {
                 params = { folder: location.hash.slice(1) }
-                console.log(params)
-            } else {
-                console.log('no hash')
             }
 
             $.ajax({
